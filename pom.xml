@@ -14,6 +14,7 @@
 
     <properties>
         <reactor.version>Dysprosium-SR7</reactor.version>
+        <hutool.version>5.3.7</hutool.version>
         <lombok.version>1.18.12</lombok.version>
         <slf4j.version>1.7.30</slf4j.version>
         <junit.version>4.13</junit.version>
@@ -30,6 +31,11 @@
 
 
     <dependencies>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -59,6 +65,12 @@
                 <version>${reactor.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
             </dependency>
 
             <dependency>
