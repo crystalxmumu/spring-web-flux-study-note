@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
@@ -44,30 +46,32 @@ public class StreamTerminalOperationTransformTest {
      */
     @Test
     public void testReduce3() {
-        ArrayList<Integer> accResult_ = Stream.of(1, 2, 3, 4).parallel()
-                .reduce(new ArrayList<Integer>(),
-                        new BiFunction<ArrayList<Integer>, Integer, ArrayList<Integer>>() {
-                            @Override
-                            public ArrayList<Integer> apply(ArrayList<Integer> acc, Integer item) {
 
-                                acc.add(item);
-                                System.out.println("item: " + item);
-                                System.out.println("acc+ : " + acc);
-                                System.out.println("BiFunction");
-                                return acc;
-                            }
-                        }, new BinaryOperator<ArrayList<Integer>>() {
-                            @Override
-                            public ArrayList<Integer> apply(ArrayList<Integer> acc, ArrayList<Integer> item) {
-                                System.out.println("BinaryOperator");
-                                acc.addAll(item);
-                                System.out.println("item: " + item);
-                                System.out.println("acc+ : " + acc);
-                                System.out.println("--------");
-                                return acc;
-                            }
+        List<Integer> accResult_ = Stream.of(1, 2, 3, 4).parallel()
+                .reduce(Collections.synchronizedList(new ArrayList<>()),
+                        (acc, item) -> {
+                            List<Integer> list = new ArrayList<>();
+                            list.add(item);
+                            System.out.println("item BiFunction : " + item);
+                            System.out.println("acc+ BiFunction: " + list);
+                            return list;
+                        }, (acc, item) -> {
+                            acc.addAll(item);
+                            System.out.println("item BinaryOperator: " + item);
+                            System.out.println("acc+ BinaryOperator: " + acc);
+                            return acc;
                         });
         System.out.println("accResult_: " + accResult_);
     }
 
+    @Test
+    public void test4() {
+        // 求单词长度之和
+        Stream<String> stream = Stream.of("I", "love", "you", "too");
+        Integer lengthSum = stream.parallel().reduce(0,// 初始值　// (1)
+                (sum, str) -> sum + str.length(), // 累加器 // (2)
+                Integer::sum);// 部分和拼接器，并行执行时才会用到 // (3)
+        // int lengthSum = stream.mapToInt(str -> str.length()).sum();
+        System.out.println(lengthSum);
+    }
 }
