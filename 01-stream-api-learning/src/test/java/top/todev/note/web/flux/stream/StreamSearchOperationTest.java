@@ -88,6 +88,9 @@ public class StreamSearchOperationTest {
         );
     }
 
+    /**
+     * 综合使用2
+     */
     @Test
     public void testPrimesNumber() {
         int page = 34;
