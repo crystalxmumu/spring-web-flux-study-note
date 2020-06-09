@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 /**
  * <p>JDK的Stream和Reactor书写比较</p>
- * @author hk
+ * @author 小飞猪
  * @version 1.0.0
  * @date 2020-06-05 11:32
  * @since 1.0.0

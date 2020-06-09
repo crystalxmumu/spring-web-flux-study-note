@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 /**
  * <p>Stream映射操作测试类</p>
  *
- * @author hk
+ * @author 小飞猪
  * @version 1.0.0
  * @date 2020-06-08 16:09
  * @since 1.0.0
