@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * <p>终端操作-匹配测试类</p>
+ * <p>终端操作-转换测试类</p>
  *
  * @author 小飞猪
  * @version 1.0.0
