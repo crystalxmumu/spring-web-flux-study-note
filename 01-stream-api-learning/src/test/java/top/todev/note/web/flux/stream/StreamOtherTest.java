@@ -1,10 +1,28 @@
 package top.todev.note.web.flux.stream;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import top.todev.note.util.FibonacciUtil;
+import top.todev.note.web.flux.stream.film.ActorComparator;
+import top.todev.note.web.flux.stream.film.ActorInfo;
+import top.todev.note.web.flux.stream.film.HundredFlowersAwards;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ForkJoinPool;
+import java.util.jar.JarFile;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 /**
  * <p>Stream其他方面测试类</p>
@@ -25,7 +43,7 @@ public class StreamOtherTest {
         long begin = System.currentTimeMillis();
         int n = 10_0000_6587;
         long sum = 0;
-        for(int i = 1; i <= n; i++ ) {
+        for (int i = 1; i <= n; i++) {
             sum += i;
         }
         log.info("1 + 2 + ... {} = {}", n, sum);
@@ -78,4 +96,256 @@ public class StreamOtherTest {
         log.info("函数方式执行时间：{}ms", end - begin);
     }
 
+
+    /**
+     * 测试并行流
+     */
+    @Test
+    public void testParallelStream() {
+        // 并行流时，并非按照1,2,3...500的顺序输出
+        IntStream.range(1, 500).parallel().forEach(System.out::println);
+    }
+
+
+    /**
+     * 测试ParallelStream阻塞
+     *
+     * @throws InterruptedException
+     */
+    @Test
+    public void testParallelStreamBlock() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        Set<Thread> threadSet = new CopyOnWriteArraySet<>();
+        Thread threadA = new Thread(() -> {
+            long n = 321_0000_6587L;
+            log.info("1 + 2 + ... {} = {}", n,
+                    LongStream.range(1, n)
+                            .parallel()
+                            .peek(d -> {
+                                Thread currentThread = Thread.currentThread();
+                                if (!threadSet.contains(currentThread)) {
+                                    log.info("线程A工作线程:{}", currentThread);
+                                    threadSet.add(currentThread);
+                                }
+                            })
+                            .sum());
+            countDownLatch.countDown();
+        });
+        Thread threadB = new Thread(() -> {
+            long n = 321_0000_6587L;
+            log.info("1 + 2 + ... {} = {}", n,
+                    LongStream
+                            .range(1, n)
+                            .parallel()
+                            .peek(d -> {
+                                Thread currentThread = Thread.currentThread();
+                                if (!threadSet.contains(currentThread)) {
+                                    log.info("线程B工作线程:{}", currentThread);
+                                    threadSet.add(currentThread);
+                                }
+                            })
+                            .sum());
+            countDownLatch.countDown();
+        });
+
+        threadA.start();
+        threadB.start();
+        countDownLatch.await();
+    }
+
+    @Test
+    public void testBufferReaderStream() throws IOException {
+        final String name = "明玉";
+        // 从网络上读取文字内容
+        new BufferedReader(
+                new InputStreamReader(
+                        new URL("https://www.txtxzz.com/txt/download/NWJhZjI3YjIzYWQ3N2UwMTZiNDQwYWE3")
+                                // new URL("https://api.apiopen.top/getAllUrl")
+                                .openStream()))
+                .lines()
+                .filter(str -> StrUtil.contains(str, name))
+                .forEach(System.out::println);
+    }
+
+    /**
+     * 从文件系统获取下级路径及文件
+     *
+     * @throws IOException
+     */
+    @Test
+    public void testFilesWalk() throws IOException {
+        // 获取文件系统的下级路径及其文件
+        Files.walk(FileSystems.getDefault().getPath("D:\\soft"))
+                .forEach(System.out::println);
+    }
+
+
+    /**
+     * 从文件系统获取文件内容
+     *
+     * @throws IOException
+     */
+    @Test
+    public void testFilesLines() throws IOException {
+        Files.lines(FileSystems.getDefault().getPath("D:\\", "a.txt"))
+                // .parallel()
+                .limit(200)
+                .forEach(System.out::println);
+    }
+
+    /**
+     * 读取JarFile为Stream
+     *
+     * @throws IOException
+     */
+    @Test
+    public void testJarFile() throws IOException {
+        new JarFile("D:\\J2EE_Tools\\repository\\org\\springframework\\spring-core\\5.2.6.RELEASE\\spring-core-5.2.6.RELEASE.jar")
+                .stream()
+                .filter(entry -> StrUtil.contains(entry.getName(), "Method"))
+                .forEach(System.out::println);
+    }
+
+    /**
+     *
+     */
+    @Test
+    public void testRandomDoubles() {
+        double v = new Random()
+                .doubles(30, 2, 45)
+                .peek(System.out::println)
+                .max()
+                .getAsDouble();
+        log.info("一串随机数的最大值为：{}", v);
+    }
+
+    /**
+     * 自增长位向量转换为Stream
+     */
+    @Test
+    public void testBitSet() {
+        BitSet bitSet = new BitSet(8);
+        bitSet.set(1);
+        bitSet.set(6);
+        log.info("cardinality值{}", bitSet.cardinality());
+        bitSet.stream().forEach(System.out::println);
+    }
+
+    /**
+     * 正则分割为Stream
+     */
+    @Test
+    public void testPattern() {
+        Pattern.compile(":")
+                .splitAsStream("boo:and:foo")
+                .map(String::toUpperCase)
+                .forEach(System.out::println);
+    }
+
+    @Test
+    public void testComprehensiveExample() {
+        List<HundredFlowersAwards> list = new ArrayList<>();
+        list.add(new HundredFlowersAwards(1962, "崔嵬", "《红旗谱》"));
+        list.add(new HundredFlowersAwards(1963, "张良", "《哥俩好"));
+        list.add(new HundredFlowersAwards(1980, "李仁堂", "《泪痕》"));
+        list.add(new HundredFlowersAwards(1981, "达式常", "《燕归来》"));
+        list.add(new HundredFlowersAwards(1982, "王心刚", "《知音》"));
+        list.add(new HundredFlowersAwards(1983, "严顺开", "《阿Q正传》"));
+        list.add(new HundredFlowersAwards(1984, "杨在葆", "《血，总是热的》"));
+        list.add(new HundredFlowersAwards(1985, "吕晓禾", "《高山下的花环》"));
+        list.add(new HundredFlowersAwards(1986, "杨在葆", "《代理市长》"));
+        list.add(new HundredFlowersAwards(1987, "姜文", "《芙蓉镇》"));
+        list.add(new HundredFlowersAwards(1988, "张艺谋", "《老井》"));
+        list.add(new HundredFlowersAwards(1989, "姜文", "《春桃》"));
+        list.add(new HundredFlowersAwards(1990, "古月", "《开国大典》"));
+        list.add(new HundredFlowersAwards(1991, "李雪健", "《焦裕禄》"));
+        list.add(new HundredFlowersAwards(1992, "王铁成", "《周恩来》"));
+        list.add(new HundredFlowersAwards(1993, "古月", "《毛泽东的故事》"));
+        list.add(new HundredFlowersAwards(1994, "李保田", "《凤凰琴》"));
+        list.add(new HundredFlowersAwards(1995, "李仁堂", "《被告山杠爷》"));
+        list.add(new HundredFlowersAwards(1996, "张国立", "《混在北京》"));
+        list.add(new HundredFlowersAwards(1997, "高明", "《孔繁森》"));
+        list.add(new HundredFlowersAwards(1998, "葛优", "《甲方乙方》"));
+        list.add(new HundredFlowersAwards(1999, "赵本山", "《男妇女主任》"));
+        list.add(new HundredFlowersAwards(2000, "潘长江", "《明天我爱你》"));
+        list.add(new HundredFlowersAwards(2001, "王庆祥", "《生死抉择》"));
+        list.add(new HundredFlowersAwards(2002, "葛优", "《大腕》"));
+        list.add(new HundredFlowersAwards(2003, "卢奇", "《邓小平》"));
+        list.add(new HundredFlowersAwards(2004, "葛优", "《手机》"));
+        list.add(new HundredFlowersAwards(2004, "李幼斌", "《惊心动魂》"));
+        list.add(new HundredFlowersAwards(2006, "吴军", "《张思德》"));
+        list.add(new HundredFlowersAwards(2008, "张涵予", "《集结号》"));
+        list.add(new HundredFlowersAwards(2010, "陈坤", "《画皮》"));
+        list.add(new HundredFlowersAwards(2012, "文章", "《失恋33天》"));
+        list.add(new HundredFlowersAwards(2014, "黄晓明", "《中国合伙人》"));
+        list.add(new HundredFlowersAwards(2016, "冯绍峰", "《狼图腾》"));
+        list.add(new HundredFlowersAwards(2018, "吴京", "《战狼2》"));
+
+        list.stream()
+                .collect(Collectors.toMap(HundredFlowersAwards::getActorName, ActorInfo::new, ActorInfo::addFilmInfos))
+                .values()
+                .stream()
+                .sorted(new ActorComparator())
+                .forEach(System.out::println);
+    }
+
+    @Test
+    public void testForkJoinPool() throws InterruptedException {
+        // 设置不同的值 -Djava.util.concurrent.ForkJoinPool.common.parallelism=1 来限制ForkJoinPool提供的并行数
+        System.out.println("Hello World!");
+        // 构造一个10000个元素的集合
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < 10000; i++) {
+            list.add(i);
+        }
+        // 统计并行执行list的线程
+        Set<Thread> threadSet = new CopyOnWriteArraySet<>();
+        // 并行执行
+        list.parallelStream().forEach(integer -> {
+            Thread thread = Thread.currentThread();
+            // System.out.println(thread);
+            // 统计并行执行list的线程
+            threadSet.add(thread);
+        });
+        System.out.println("threadSet一共有" + threadSet.size() + "个线程");
+        System.out.println("系统一个有" + Runtime.getRuntime().availableProcessors() + "个cpu");
+        List<Integer> list1 = new ArrayList<>();
+        List<Integer> list2 = new ArrayList<>();
+        for (int i = 0; i < 100000; i++) {
+            list1.add(i);
+            list2.add(i);
+        }
+        Set<Thread> threadSetTwo = new CopyOnWriteArraySet<>();
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        Thread threadA = new Thread(() -> {
+            list1.parallelStream().forEach(integer -> {
+                Thread thread = Thread.currentThread();
+                // System.out.println("list1" + thread);
+                threadSetTwo.add(thread);
+            });
+            countDownLatch.countDown();
+        });
+        Thread threadB = new Thread(() -> {
+            list2.parallelStream().forEach(integer -> {
+                Thread thread = Thread.currentThread();
+                // System.out.println("list2" + thread);
+                threadSetTwo.add(thread);
+            });
+            countDownLatch.countDown();
+        });
+
+        threadA.start();
+        threadB.start();
+        countDownLatch.await();
+        System.out.print("threadSetTwo一共有" + threadSetTwo.size() + "个线程");
+
+        System.out.println("---------------------------");
+        System.out.println(threadSet);
+        System.out.println(threadSetTwo);
+        System.out.println("---------------------------");
+        threadSetTwo.addAll(threadSet);
+        System.out.println(threadSetTwo);
+        System.out.println("threadSetTwo一共有" + threadSetTwo.size() + "个线程");
+        System.out.println("系统一共有" + Runtime.getRuntime().availableProcessors() + "个cpu");
+    }
 }
