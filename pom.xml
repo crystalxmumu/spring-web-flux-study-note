@@ -10,10 +10,11 @@
     <version>1.0.0</version>
     <modules>
         <module>01-stream-api-learning</module>
+        <module>02-reactor-core-learning</module>
     </modules>
 
     <properties>
-        <reactor.version>Dysprosium-SR7</reactor.version>
+        <reactor.version>Dysprosium-SR8</reactor.version>
         <hutool.version>5.3.7</hutool.version>
         <lombok.version>1.18.12</lombok.version>
         <slf4j.version>1.7.30</slf4j.version>
