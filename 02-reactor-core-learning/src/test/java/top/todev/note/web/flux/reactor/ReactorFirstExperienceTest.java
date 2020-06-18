@@ -93,8 +93,6 @@ public class ReactorFirstExperienceTest {
                 //.checkpoint("hello")
                 //.checkpoint("hello", true)
                 .subscribe(System.out::println);
-
-        Thread.sleep(5000L);
     }
 
 }
