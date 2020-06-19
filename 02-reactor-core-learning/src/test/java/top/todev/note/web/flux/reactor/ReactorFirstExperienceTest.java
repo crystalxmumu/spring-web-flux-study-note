@@ -49,10 +49,11 @@ public class ReactorFirstExperienceTest {
      * Reactor 的索引获取
      */
     @Test
-    public void testReactorWordsAddIndex() {
+    public void testReactorWordsAddIndex() throws InterruptedException {
         Flux.fromArray(WORDS)
                 .zipWith(Flux.range(1, Integer.MAX_VALUE),
                         (word, index) -> StrUtil.format("{}. {}", index, word))
+                .log()
                 .subscribe(System.out::println);
     }
 
