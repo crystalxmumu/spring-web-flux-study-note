@@ -83,6 +83,16 @@ public class ReactorBasicLearningTest {
     }
 
     /**
+     * 测试错误
+     */
+    @Test
+    public void testError() {
+        Flux.error(new IllegalStateException(), true)
+                .log()
+                .subscribe(System.out::println, System.err::println);
+    }
+
+    /**
      * 测试 Subscribe
      */
     @Test
